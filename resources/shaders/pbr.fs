@@ -8,6 +8,8 @@
 
 out vec4 FragColor;
 
+
+
 uniform vec4      uBaseColorFactor;
 uniform sampler2D uBaseColorMap;
 uniform int       uBaseColorMapSet;
@@ -23,6 +25,8 @@ uniform int       uNormalMapSet;
 uniform vec4      uEmissiveFactor;
 uniform sampler2D uEmissiveMap;
 uniform int       uEmissiveMapSet;
+
+uniform samplerCube uCubeMap;
 
 in vec3 WorldPos;
 in vec3 Normal;
@@ -141,6 +145,12 @@ float D_GGX(float NoH, float roughness2)
     return roughness2 / (M_PI * f * f);
 }
 
+vec3 getReflection(float perceptualRoughness, float NoV, vec3 n, vec3 r)
+{
+    float lod = perceptualRoughness * 0.5;
+    vec3 light = SRGBtoLINEAR(tonemap(textureLod(uCubeMap, r, lod))).rgb;
+	return F_Schlick(NoV, light * 0.3, light);
+}
 
 
 void main()
@@ -196,7 +206,7 @@ void main()
 	vec3 n = (uNormalMapSet > -1) ? getNormal() : normalize(Normal);
 	vec3 v = normalize(uEyePos - WorldPos);    // Vector from surface point to camera
 	vec3 l = normalize(uLightPos - WorldPos);     // Vector from surface point to light
-	vec3 h = normalize(l+v);                        // Half vector between both l and v
+	vec3 h = normalize(l + v);                        // Half vector between both l and v
 	vec3 r = -normalize(reflect(v, n));
 	r.y *= -1.0;
 	
@@ -225,7 +235,7 @@ void main()
 	
 	// lightIntensity is the illuminance
     // at perpendicular incidence in lux
-    float lightIntensity = 5.f; //lux
+    float lightIntensity = 3.f; //lux
     float illuminance = lightIntensity * NdotL;
     color *= illuminance;
     
@@ -237,7 +247,9 @@ void main()
 		color += emissive;
 	}
 	
-	FragColor = vec4(color  + 0.05 * baseColor.rgb, baseColor.a);
+	color += getReflection(perceptualRoughness, NdotV, n, r);
+	
+	FragColor = vec4(color + 0.05 * baseColor.rgb, baseColor.a);
 }
 
 
