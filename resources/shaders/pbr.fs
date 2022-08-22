@@ -147,9 +147,9 @@ float D_GGX(float NoH, float roughness2)
 
 vec3 getReflection(float perceptualRoughness, float NoV, vec3 n, vec3 r)
 {
-    float lod = perceptualRoughness * 0.5;
+    float lod = perceptualRoughness;
     vec3 light = SRGBtoLINEAR(tonemap(textureLod(uCubeMap, r, lod))).rgb;
-	return F_Schlick(NoV, light * 0.3, light);
+	return F_Schlick(NoV, light * 0.4, light) * (1.0 - perceptualRoughness * perceptualRoughness);
 }
 
 
