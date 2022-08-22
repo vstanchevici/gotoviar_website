@@ -147,9 +147,9 @@ float D_GGX(float NoH, float roughness2)
 
 vec3 getReflection(float perceptualRoughness, float NoV, vec3 n, vec3 r)
 {
-    float lod = perceptualRoughness;
+    float lod = perceptualRoughness * perceptualRoughness;
     vec3 light = SRGBtoLINEAR(tonemap(textureLod(uCubeMap, r, lod))).rgb;
-	return F_Schlick(NoV, light * 0.4, light) * (1.0 - perceptualRoughness * perceptualRoughness);
+	return F_Schlick(NoV, light * 0.4, light) * (1.0 -  perceptualRoughness);
 }
 
 
@@ -249,6 +249,7 @@ void main()
 	
 	color += getReflection(perceptualRoughness, NdotV, n, r);
 	
+	//FragColor = vec4(color * 0.000001 + vec3(perceptualRoughness), baseColor.a);
 	FragColor = vec4(color + 0.05 * baseColor.rgb, baseColor.a);
 }
 
