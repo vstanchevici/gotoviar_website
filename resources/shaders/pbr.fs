@@ -145,11 +145,13 @@ float D_GGX(float NoH, float roughness2)
     return roughness2 / (M_PI * f * f);
 }
 
-vec3 getReflection(float perceptualRoughness, float NoV, vec3 n, vec3 r)
+vec3 getReflection(vec3 baseColor, float roughness, float metallic, float NoV, vec3 n, vec3 r)
 {
-    float lod = perceptualRoughness * perceptualRoughness;
-    vec3 light = SRGBtoLINEAR(tonemap(textureLod(uCubeMap, r, lod))).rgb;
-	return F_Schlick(NoV, light * 0.4, light) * (1.0 -  perceptualRoughness);
+    float lod = roughness * roughness;
+    vec3 reflectance = SRGBtoLINEAR(tonemap(textureLod(uCubeMap, r, 1.0))).rgb;
+    vec3 f0 = 0.3 * reflectance * (1.0 - metallic) + baseColor * metallic;
+    vec3 f90 = reflectance;
+	return F_Schlick(NoV, f0, f90) * (1.0 - roughness) * (1.0 - roughness);
 }
 
 
@@ -160,8 +162,9 @@ void main()
 	vec3 diffuseColor;
 	vec4 baseColor;
 	
+	//baseColor = SRGBtoLINEAR(texture(uBaseColorMap, uBaseColorMapSet == 0 ? UV0 : UV1)) * uBaseColorFactor;
     if (uBaseColorMapSet > -1) 
-        baseColor = SRGBtoLINEAR(texture(uBaseColorMap, uBaseColorMapSet == 0 ? UV0 : UV1)) * uBaseColorFactor;
+        baseColor = texture(uBaseColorMap, uBaseColorMapSet == 0 ? UV0 : UV1) * uBaseColorFactor;
     else 
         baseColor = uBaseColorFactor;
     
@@ -235,7 +238,7 @@ void main()
 	
 	// lightIntensity is the illuminance
     // at perpendicular incidence in lux
-    float lightIntensity = 3.f; //lux
+    float lightIntensity = 5.f; //lux
     float illuminance = lightIntensity * NdotL;
     color *= illuminance;
     
@@ -247,10 +250,10 @@ void main()
 		color += emissive;
 	}
 	
-	color += getReflection(perceptualRoughness, NdotV, n, r);
+	color += getReflection(baseColor.rgb, perceptualRoughness, metallic, NdotV, n, r);
 	
 	//FragColor = vec4(color * 0.000001 + vec3(perceptualRoughness), baseColor.a);
-	FragColor = vec4(color + 0.05 * baseColor.rgb, baseColor.a);
+	FragColor = vec4(color + 0.2 * baseColor.rgb, baseColor.a);
 }
 
 
