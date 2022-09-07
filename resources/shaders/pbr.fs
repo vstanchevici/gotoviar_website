@@ -147,11 +147,12 @@ float D_GGX(float NoH, float roughness2)
 
 vec3 getReflection(vec3 baseColor, float roughness, float metallic, float NoV, vec3 n, vec3 r)
 {
-    float lod = roughness * roughness;
-    vec3 reflectance = SRGBtoLINEAR(tonemap(textureLod(uCubeMap, r, 1.0))).rgb;
-    vec3 f0 = 0.3 * reflectance * (1.0 - metallic) + baseColor * metallic;
-    vec3 f90 = reflectance;
-	return F_Schlick(NoV, f0, f90) * (1.0 - roughness) * (1.0 - roughness);
+    float lod = 14.0 * roughness;
+    vec3 reflectance = SRGBtoLINEAR(tonemap(textureLod(uCubeMap, r, lod))).rgb;
+    vec3 f0 = 0.16 * reflectance * (1.0 - metallic) + baseColor * reflectance * metallic;
+    //vec3 f90 = baseColor * reflectance * metallic + (1.0 - metallic) * baseColor;
+    vec3 f90 = baseColor * reflectance * metallic + (1.0 - metallic) * baseColor;
+	return F_Schlick(NoV, f0, f90) * (1.0 - roughness) + (baseColor / 3.0) * roughness;
 }
 
 
